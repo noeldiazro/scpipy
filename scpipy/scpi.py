@@ -15,7 +15,7 @@ class ScpiConnection(object):
         return self._link.write(message + self.delimiter) - len(self.delimiter)
 
 
-class ScpiController(object):
+class ScpiSession(object):
     
     def __init__(self, connection):
         self._connection = connection

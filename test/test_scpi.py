@@ -1,6 +1,6 @@
 from unittest import TestCase
 from mock import Mock
-from scpipy import ScpiConnection, ScpiController
+from scpipy import ScpiConnection, ScpiSession
 from scpipy.links import TcpIpLink
 
 class ScpiConnectionTest(TestCase):
@@ -28,14 +28,14 @@ class ScpiConnectionTest(TestCase):
 
         self.assertEqual(len(message), number_of_bytes)
 
-class ScpiControllerTest(TestCase):
-    def test_create_scpi_controller(self):
+class ScpiSessionTest(TestCase):
+    def test_create_scpi_session(self):
         test_connection = Mock(ScpiConnection)
-        controller = ScpiController(test_connection)
+        controller = ScpiSession(test_connection)
 
-    def test_open_close_scpi_controller(self):
+    def test_open_close_scpi_session(self):
         test_connection = Mock(ScpiConnection)
-        controller = ScpiController(test_connection)
+        controller = ScpiSession(test_connection)
         controller.open()
         controller.close()
 
