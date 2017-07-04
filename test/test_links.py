@@ -1,5 +1,5 @@
 from unittest import TestCase
-from scpipy import TcpIpLink, TcpIpAddress
+from scpipy.links import TcpIpLink, TcpIpAddress
 
 class TcpIpLinkTest(TestCase):
     host = 'rp-f0060c.local'
