@@ -1,6 +1,6 @@
 from unittest import TestCase
 from mock import Mock
-from scpipy import ScpiConnection
+from scpipy import ScpiConnection, ScpiController
 from scpipy.links import TcpIpLink
 
 class ScpiConnectionTest(TestCase):
@@ -27,3 +27,15 @@ class ScpiConnectionTest(TestCase):
         number_of_bytes = connection.write(message)
 
         self.assertEqual(len(message), number_of_bytes)
+
+class ScpiControllerTest(TestCase):
+    def test_create_scpi_controller(self):
+        test_connection = Mock(ScpiConnection)
+        controller = ScpiController(test_connection)
+
+    def test_open_close_scpi_controller(self):
+        test_connection = Mock(ScpiConnection)
+        controller = ScpiController(test_connection)
+        controller.open()
+        controller.close()
+
