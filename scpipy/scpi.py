@@ -1,3 +1,4 @@
+from scpipy.links import TcpIpAddress, TcpIpLink
 
 class ScpiConnection(object):
     delimiter = '\r\n'
@@ -32,3 +33,14 @@ class ScpiSession(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    def set_digital_output_state(self, pin, state):
+        message = 'DIG:PIN {},{}'.format(pin, state)
+        self._connection.write(message)
+
+
+class ScpiSessionFactory(object):
+    def get_scpi_session(self, host, port=5000, timeout=None, alt_socket=None):
+        link = TcpIpLink(TcpIpAddress(host, port))
+        connection = ScpiConnection(link)
+        return ScpiSession(connection)
