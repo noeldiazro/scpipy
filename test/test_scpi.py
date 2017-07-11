@@ -1,6 +1,6 @@
 from unittest import TestCase
 from mock import Mock
-from scpipy import ScpiConnection, State, Direction, DigitalController, AnalogController
+from scpipy import *
 from scpipy.links import TcpIpLink
 
 class ScpiConnectionTest(TestCase):
@@ -85,10 +85,40 @@ class AnalogControllerTest(TestCase):
 
         
 class GeneratorTest(TestCase):
+    def setUp(self):
+        self.connection = Mock(ScpiConnection)
+        self.connection.open()
+        self.generator = Generator(self.connection)
+        
     def test_reset_generator(self):
-        with Mock(ScpiConnection) as test_connection:
-            generator = Generator(test_connection)
-            generator.reset()
+        self.generator.reset()
+
+    def test_set_waveform(self):
+        channel = 1
+        waveform = Waveform.SINE
+        self.generator.set_waveform(channel, waveform)
+
+    def test_set_frequency(self):
+        channel = 1
+        frequency = 100000
+        self.generator.set_frequency(channel, frequency)
+
+    def test_set_amplitude(self):
+        channel = 2
+        amplitude = 0.5
+        self.generator.set_amplitude(channel, amplitude)
+
+    def test_enable_output(self):
+        channel = 1
+        self.generator.enable_output(channel)
+
+    def test_disable_output(self):
+        channel = 1
+        self.generator.disable_output(channel)
+        
+    def tearDown(self):
+        self.connection.close()
+
 
 class TestScpiConnection(object):
     def __init__(self, buffer = 'ABCDEF'):

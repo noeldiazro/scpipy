@@ -11,6 +11,16 @@ class Direction(Enum):
     OUTPUT = 'OUTPUT'
 
 
+class Waveform(Enum):
+    SINE = 'SINE'
+    SQUARE = 'SQUARE'
+    TRIANGLE = 'TRIANGLE'
+    SAWU = 'SAWU'
+    SAWD = 'SAWD'
+    PWD = 'PWD'
+    ARBITRARY = 'ARBITRARY'
+    
+
 class ScpiConnection(object):
     delimiter = '\r\n'
     
@@ -43,6 +53,11 @@ class ScpiConnection(object):
         self.close()
 
 
+def get_tcpip_scpi_connection(host, port=5000, timeout=None, alt_socket=None):
+    link = TcpIpLink(TcpIpAddress(host, port))
+    return ScpiConnection(link)
+
+        
 class DigitalController(object):
     def __init__(self, connection):
         self._connection = connection
@@ -75,6 +90,29 @@ class AnalogController(object):
         self._connection.write(message)
 
 
-def get_tcpip_scpi_connection(host, port=5000, timeout=None, alt_socket=None):
-    link = TcpIpLink(TcpIpAddress(host, port))
-    return ScpiConnection(link)
+class Generator(object):
+    def __init__(self, connection):
+        self._connection = connection
+
+    def reset(self):
+        self._connection.write('GEN:RST')
+
+    def set_waveform(self, channel, waveform=Waveform.SINE):
+        message = 'SOUR{}:FUNC {}'.format(channel, waveform.value)
+        self._connection.write(message)
+
+    def set_frequency(self, channel, frequency=1000):
+        message = 'SOUR{}:FREQ:FIX {}'.format(channel, frequency)
+        self._connection.write(message)
+
+    def set_amplitude(self, channel, amplitude=1):
+        message = 'SOUR{}:VOLT {}'.format(channel, amplitude)
+        self._connection.write(message)
+
+    def enable_output(self, channel):
+        message = 'OUTPUT{}:STATE ON'.format(channel)
+        self._connection.write(message)
+
+    def disable_output(self, channel):
+        message = 'OUTPUT{}:STATE OFF'.format(channel)
+        self._connection.write(message)
