@@ -72,3 +72,11 @@ class ScpiSessionTest(TestCase):
             pin = 'AIN3'
             input_value = session.get_analog_input(pin)
         self.assertAlmostEqual(1.8, input_value, delta=0.0001)
+
+    def test_set_analog_output(self):
+        test_connection = Mock(ScpiConnection)
+        with ScpiSession(test_connection) as session:
+            pin = 'AOUT3'
+            value = 1.34
+            session.set_analog_output(pin, value)
+            
