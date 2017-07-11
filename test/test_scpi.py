@@ -64,3 +64,11 @@ class ScpiSessionTest(TestCase):
         with ScpiSession(test_connection) as session:
             state = session.get_digital_state('DIO0_N')
         self.assertEqual(State.HIGH, state)
+
+    def test_get_analog_input(self):
+        test_connection = Mock(ScpiConnection)
+        test_connection.read.return_value = '1.8'
+        with ScpiSession(test_connection) as session:
+            pin = 'AIN3'
+            input_value = session.get_analog_input(pin)
+        self.assertAlmostEqual(1.8, input_value, delta=0.0001)

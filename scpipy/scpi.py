@@ -67,6 +67,10 @@ class ScpiSession(object):
         self._connection.write(request)
         return State(self._connection.read())
 
+    def get_analog_input(self, pin):
+        request = 'ANALOG:PIN? {}'.format(pin)
+        self._connection.write(request)
+        return float(self._connection.read())
 
 class ScpiSessionFactory(object):
     def get_scpi_session(self, host, port=5000, timeout=None, alt_socket=None):
