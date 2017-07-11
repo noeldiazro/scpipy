@@ -1,4 +1,15 @@
+from enum import Enum
 from scpipy.links import TcpIpAddress, TcpIpLink
+
+class State(Enum):
+    LOW = '0'
+    HIGH = '1'
+
+
+class Direction(Enum):
+    INPUT = 'IN'
+    OUTPUT = 'OUTPUT'
+
 
 class ScpiConnection(object):
     delimiter = '\r\n'
@@ -35,7 +46,15 @@ class ScpiSession(object):
         self.close()
 
     def set_digital_output_state(self, pin, state):
-        message = 'DIG:PIN {},{}'.format(pin, state)
+        message = 'DIG:PIN {},{}'.format(pin, state.value)
+        self._connection.write(message)
+
+    def set_digital_direction(self, pin, direction):
+        message = 'DIG:PIN DIR {},{}'.format(direction.value, pin)
+        self._connection.write(message)
+
+    def get_digital_state(self, pin):
+        message = 'DIG:PIN? {}'.format(pin)
         self._connection.write(message)
 
 
