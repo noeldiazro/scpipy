@@ -35,18 +35,6 @@ class ScpiConnection(object):
                 break
         return message.rstrip(self.delimiter)
 
-
-class ScpiSession(object):
-    
-    def __init__(self, connection):
-        self._connection = connection
-
-    def open(self):
-        self._connection.open()
-
-    def close(self):
-        self._connection.close()
-
     def __enter__(self):
         self.open()
         return self
@@ -54,18 +42,28 @@ class ScpiSession(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def set_digital_output_state(self, pin, state):
+
+class DigitalController(object):
+    def __init__(self, connection):
+        self._connection = connection
+
+    def set_state(self, pin, state):
         message = 'DIG:PIN {},{}'.format(pin, state.value)
         self._connection.write(message)
 
-    def set_digital_direction(self, pin, direction):
+    def set_direction(self, pin, direction):
         message = 'DIG:PIN DIR {},{}'.format(direction.value, pin)
         self._connection.write(message)
 
-    def get_digital_state(self, pin):
+    def get_state(self, pin):
         request = 'DIG:PIN? {}'.format(pin)
         self._connection.write(request)
         return State(self._connection.read())
+
+
+class AnalogController(object):
+    def __init__(self, connection):
+        self._connection = connection
 
     def get_analog_input(self, pin):
         request = 'ANALOG:PIN? {}'.format(pin)
@@ -77,8 +75,6 @@ class ScpiSession(object):
         self._connection.write(message)
 
 
-class ScpiSessionFactory(object):
-    def get_scpi_session(self, host, port=5000, timeout=None, alt_socket=None):
-        link = TcpIpLink(TcpIpAddress(host, port))
-        connection = ScpiConnection(link)
-        return ScpiSession(connection)
+def get_tcpip_scpi_connection(host, port=5000, timeout=None, alt_socket=None):
+    link = TcpIpLink(TcpIpAddress(host, port))
+    return ScpiConnection(link)

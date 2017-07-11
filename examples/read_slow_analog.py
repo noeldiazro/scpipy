@@ -1,13 +1,14 @@
 import sys
 from time import sleep
-from scpipy import ScpiSessionFactory
+from scpipy import get_tcpip_scpi_connection, AnalogController
 
 def main(host):
     period = 1
-    with ScpiSessionFactory().get_scpi_session(host) as session:
+    with get_tcpip_scpi_connection(host) as connection:
+        controller = AnalogController(connection)
         try:
             while True:
-                voltage = session.get_analog_input('AIN3')
+                voltage = controller.get_analog_input('AIN3')
                 print(voltage)
                 sleep(period)
         except KeyboardInterrupt:

@@ -1,6 +1,6 @@
 from unittest import TestCase
 from mock import Mock
-from scpipy import ScpiConnection, ScpiSession, State, Direction
+from scpipy import ScpiConnection, State, Direction, DigitalController, AnalogController
 from scpipy.links import TcpIpLink
 
 class ScpiConnectionTest(TestCase):
@@ -37,46 +37,71 @@ class ScpiConnectionTest(TestCase):
         self.assertEqual('ABCDEFG', message)
 
 
-class ScpiSessionTest(TestCase):
-    def test_create_scpi_session(self):
-        test_connection = Mock(ScpiConnection)
-        session = ScpiSession(test_connection)
+class DigitalControllerTest(TestCase):
+    def setUp(self):
+        self.connection = Mock(ScpiConnection)
+        self.connection.open()
+        self.controller = DigitalController(self.connection)
 
-    def test_open_close_scpi_session(self):
-        test_connection = Mock(ScpiConnection)
-        session = ScpiSession(test_connection)
-        session.open()
-        session.close()
+    def test_set_state(self):
+        pin = 'LED0'
+        state = State.HIGH
+        self.controller.set_state(pin, state)
 
-    def test_set_digital_output_state(self):
-        test_connection = Mock(ScpiConnection)
-        with ScpiSession(test_connection) as session:
-            session.set_digital_output_state('LED0', State.HIGH)
+    def test_set_direction(self):
+        pin = 'LED0'
+        direction = Direction.OUTPUT
+        self.controller.set_direction(pin, direction)
 
-    def test_set_digital_direction_output(self):
-        test_connection = Mock(ScpiConnection)
-        with ScpiSession(test_connection) as session:
-            session.set_digital_direction('LED0', Direction.OUTPUT)
-
-    def test_get_digital_state(self):
-        test_connection = Mock(ScpiConnection)
-        test_connection.read.return_value = '1'
-        with ScpiSession(test_connection) as session:
-            state = session.get_digital_state('DIO0_N')
+    def test_get_state(self):
+        self.connection.read.return_value = '1'
+        pin = 'DIO0_N'
+        state = self.controller.get_state('DIO0_N')
         self.assertEqual(State.HIGH, state)
 
+    def tearDown(self):
+        self.connection.close()
+        
+
+class AnalogControllerTest(TestCase):
+    def setUp(self):
+        self.connection = Mock(ScpiConnection)
+        self.connection.open()
+        self.controller = AnalogController(self.connection)
+
     def test_get_analog_input(self):
-        test_connection = Mock(ScpiConnection)
-        test_connection.read.return_value = '1.8'
-        with ScpiSession(test_connection) as session:
-            pin = 'AIN3'
-            input_value = session.get_analog_input(pin)
-        self.assertAlmostEqual(1.8, input_value, delta=0.0001)
+        self.connection.read.return_value = '1.8'
+        pin = 'AIN3'
+        voltage = self.controller.get_analog_input(pin)
+        self.assertAlmostEqual(1.8, voltage, delta=0.0001)
 
     def test_set_analog_output(self):
-        test_connection = Mock(ScpiConnection)
-        with ScpiSession(test_connection) as session:
-            pin = 'AOUT3'
-            value = 1.34
-            session.set_analog_output(pin, value)
-            
+        pin = 'AOUT3'
+        value = 1.34
+        self.controller.set_analog_output(pin, value)
+
+    def tearDown(self):
+        self.connection.close()
+
+        
+class GeneratorTest(TestCase):
+    def test_reset_generator(self):
+        with Mock(ScpiConnection) as test_connection:
+            generator = Generator(test_connection)
+            generator.reset()
+
+class TestScpiConnection(object):
+    def __init__(self, buffer = 'ABCDEF'):
+        self.buffer = buffer
+        
+    def open(self):
+        pass
+
+    def close(self):
+        pass
+
+    def write(self, message):
+        return len(message)
+
+    def read(self, number_of_bytes=4096):
+        return self.buffer

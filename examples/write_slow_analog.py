@@ -1,12 +1,13 @@
 import sys
 from time import sleep
-from scpipy import ScpiSessionFactory
+from scpipy import get_tcpip_scpi_connection, AnalogController
 
 def main(host):
     period = 1
-    with ScpiSessionFactory().get_scpi_session(host) as session:
+    with get_tcpip_scpi_connection(host) as connection:
+        controller = AnalogController(connection)
         for i in range(60):
-            session.set_analog_output('AOUT3', i * 0.03)
+            controller.set_analog_output('AOUT3', i * 0.03)
             sleep(period)
 
 if __name__ == '__main__':

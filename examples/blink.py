@@ -1,15 +1,16 @@
 import sys
 from time import sleep
-from scpipy import ScpiSessionFactory, State
+from scpipy import get_tcpip_scpi_connection, DigitalController, State
 
 def main(host):
     period = 1
-    with ScpiSessionFactory().get_scpi_session(host) as session:
+    with get_tcpip_scpi_connection(host) as connection:
+        controller = DigitalController(connection)
         try:
             while True:
-                session.set_digital_output_state('LED0', State.HIGH)
+                controller.set_state('LED0', State.HIGH)
                 sleep(period / 2.0)
-                session.set_digital_output_state('LED0', State.LOW)
+                controller.set_state('LED0', State.LOW)
                 sleep(period / 2.0)
         except KeyboardInterrupt:
             print('Bye!')
