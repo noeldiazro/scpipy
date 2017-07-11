@@ -29,7 +29,8 @@ class ScpiConnection(object):
     def read(self, number_of_bytes=4096):
         message = ''
         while True:
-            message += self._link.read(number_of_bytes)
+            chunk = self._link.read(number_of_bytes).replace('ERR!', '')
+            message += chunk
             if message.endswith(self.delimiter):
                 break
         return message.rstrip(self.delimiter)
