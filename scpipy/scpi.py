@@ -26,6 +26,14 @@ class ScpiConnection(object):
     def write(self, message):
         return self._link.write(message + self.delimiter) - len(self.delimiter)
 
+    def read(self, number_of_bytes=4096):
+        message = ''
+        while True:
+            message += self._link.read(number_of_bytes)
+            if message.endswith(self.delimiter):
+                break
+        return message.rstrip(self.delimiter)
+
 
 class ScpiSession(object):
     
@@ -54,8 +62,9 @@ class ScpiSession(object):
         self._connection.write(message)
 
     def get_digital_state(self, pin):
-        message = 'DIG:PIN? {}'.format(pin)
-        self._connection.write(message)
+        request = 'DIG:PIN? {}'.format(pin)
+        self._connection.write(request)
+        return State(self._connection.read())
 
 
 class ScpiSessionFactory(object):

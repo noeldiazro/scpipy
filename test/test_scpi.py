@@ -28,6 +28,15 @@ class ScpiConnectionTest(TestCase):
 
         self.assertEqual(len(message), number_of_bytes)
 
+    def test_read_text(self):
+        test_link = Mock(TcpIpLink)
+        test_link.read.return_value = 'ABCDEFG\r\n'
+        connection = ScpiConnection(test_link)
+
+        message = connection.read()
+        self.assertEqual('ABCDEFG', message)
+
+
 class ScpiSessionTest(TestCase):
     def test_create_scpi_session(self):
         test_connection = Mock(ScpiConnection)
@@ -51,5 +60,7 @@ class ScpiSessionTest(TestCase):
 
     def test_get_digital_state(self):
         test_connection = Mock(ScpiConnection)
+        test_connection.read.return_value = '1'
         with ScpiSession(test_connection) as session:
             state = session.get_digital_state('DIO0_N')
+        self.assertEqual(State.HIGH, state)
