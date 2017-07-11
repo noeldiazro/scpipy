@@ -89,30 +89,51 @@ class AnalogController(object):
         message = 'ANALOG:PIN {},{}'.format(pin, str(value))
         self._connection.write(message)
 
-
 class Generator(object):
     def __init__(self, connection):
         self._connection = connection
 
+    def command(self, message):
+        self._connection.write(message)
+        
     def reset(self):
-        self._connection.write('GEN:RST')
+        self.command('GEN:RST')
 
     def set_waveform(self, channel, waveform=Waveform.SINE):
-        message = 'SOUR{}:FUNC {}'.format(channel, waveform.value)
-        self._connection.write(message)
+        self.command('SOUR{}:FUNC {}'.format(channel, waveform.value))
 
     def set_frequency(self, channel, frequency=1000):
-        message = 'SOUR{}:FREQ:FIX {}'.format(channel, frequency)
-        self._connection.write(message)
+        self.command('SOUR{}:FREQ:FIX {}'.format(channel, frequency))
 
     def set_amplitude(self, channel, amplitude=1):
-        message = 'SOUR{}:VOLT {}'.format(channel, amplitude)
-        self._connection.write(message)
+        self.command('SOUR{}:VOLT {}'.format(channel, amplitude))
 
+    def _set_output_state(self, channel, state):
+        self.command('OUTPUT{}:STATE {}'.format(channel, state))
+        
     def enable_output(self, channel):
-        message = 'OUTPUT{}:STATE ON'.format(channel)
-        self._connection.write(message)
+        self._set_output_state(channel, 'ON')
 
     def disable_output(self, channel):
-        message = 'OUTPUT{}:STATE OFF'.format(channel)
-        self._connection.write(message)
+        self._set_output_state(channel, 'OFF')
+
+    def _set_gen_mode(self, channel, burst):
+        self.command('SOUR{}:BURS:STAT {}'.format(channel, burst))
+
+    def enable_burst(self, channel):
+        self._set_gen_mode(channel, 'ON')
+
+    def disable_burst(self, channel):
+        self._set_gen_mode(channel, 'OFF')
+
+    def set_burst_count(self, channel, count=1):
+        self.command('SOUR{}:BURS:NCYC {}'.format(channel, count))
+
+    def set_burst_repetitions(self, channel, repetitions=1):
+        self.command('SOUR{}:BURS:NOR {}'.format(channel, repetitions))
+
+    def set_burst_period(self, channel, period_in_us):
+        self.command('SOUR{}:BURS:INT:PER {}'.format(channel, period_in_us))
+
+    def trigger_immediately(self, channel):
+        self.command('SOUR{}:TRIG:IMM'.format(channel))

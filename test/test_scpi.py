@@ -115,7 +115,34 @@ class GeneratorTest(TestCase):
     def test_disable_output(self):
         channel = 1
         self.generator.disable_output(channel)
-        
+
+    def test_enable_burst_mode(self):
+        channel = 1
+        self.generator.enable_burst(channel)
+
+    def test_disable_burst_mode(self):
+        channel = 2
+        self.generator.disable_burst(channel)
+
+    def test_set_burst_count(self):
+        channel = 1
+        count = 3
+        self.generator.set_burst_count(channel, count)
+
+    def test_set_burst_repetitions(self):
+        channel = 2
+        repetitions = 5
+        self.generator.set_burst_repetitions(channel, repetitions)
+
+    def test_set_burst_period(self):
+        channel = 1
+        period_in_us = 2000
+        self.generator.set_burst_period(channel, period_in_us)
+
+    def test_trigger_immediately(self):
+        channel = 1
+        self.generator.trigger_immediately(channel)
+                                        
     def tearDown(self):
         self.connection.close()
 
