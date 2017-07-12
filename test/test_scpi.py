@@ -142,7 +142,12 @@ class GeneratorTest(TestCase):
     def test_trigger_immediately(self):
         channel = 1
         self.generator.trigger_immediately(channel)
-                                        
+
+    def test_set_arbitrary_waveform_data(self):
+        channel = 1
+        data = [1, 0.5, 0.2]
+        self.generator.set_arbitrary_waveform_data(channel, data)
+        
     def tearDown(self):
         self.connection.close()
 

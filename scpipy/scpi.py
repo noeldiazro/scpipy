@@ -137,3 +137,6 @@ class Generator(object):
 
     def trigger_immediately(self, channel):
         self.command('SOUR{}:TRIG:IMM'.format(channel))
+
+    def set_arbitrary_waveform_data(self, channel, data):
+        self.command('SOUR{}:TRAC:DATA:DATA {}'.format(channel, ','.join('{:1.2f}'.format(value) for value in data)))
