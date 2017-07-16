@@ -19,8 +19,24 @@ class Waveform(Enum):
     SAWD = 'SAWD'
     PWD = 'PWD'
     ARBITRARY = 'ARBITRARY'
+
+
+class TriggerSource(Enum):
+    CH1 = 'CH1'
+    CH2 = 'CH2'
+    EXT = 'EXT'
+    AWG = 'AWG'
+
+
+class Edge(Enum):
+    POSITIVE = 'PE'
+    NEGATIVE = 'NE'
     
 
+class TriggerState(Enum):
+    DISABLED = 'TD'
+    WAITING = 'WAIT'
+    
 class ScpiConnection(object):
     delimiter = '\r\n'
     
@@ -89,6 +105,7 @@ class AnalogController(object):
         message = 'ANALOG:PIN {},{}'.format(pin, str(value))
         self._connection.write(message)
 
+
 class Generator(object):
     def __init__(self, connection):
         self._connection = connection
@@ -140,3 +157,68 @@ class Generator(object):
 
     def set_arbitrary_waveform_data(self, channel, data):
         self.command('SOUR{}:TRAC:DATA:DATA {}'.format(channel, ','.join('{:1.2f}'.format(value) for value in data)))
+
+
+class Oscilloscope(object):
+
+    def __init__(self, connection):
+        self._connection = connection
+
+    def command(self, message):
+        self._connection.write(message)
+        
+    def query(self, message):
+        self._connection.write(message)
+        return self._connection.read()
+
+    def start(self):
+        self.command('ACQ:START')
+
+    def stop(self):
+        self.command('ACQ:STOP')
+
+    def reset(self):
+        self.command('ACQ:RST')
+
+    def set_decimation_factor(self, factor = 1):
+        self.command('ACQ:DEC {}'.format(factor))
+
+    def get_decimation_factor(self):
+        return int(self.query('ACQ:DEC?'))
+
+    def _set_averaging_state(self, state):
+        self.command('ACQ:AVG {}'.format(state))
+
+    def enable_averaging(self):
+        self._set_averaging_state('ON')
+
+    def disable_averaging(self):
+        self._set_averaging_state('OFF')
+
+    def disable_trigger(self):
+        self.command('ACQ:TRIG DISABLED')
+
+    def trigger_inmediately(self):
+        self.command('ACQ:TRIG NOW')
+
+    def set_trigger_event(self, source, edge):
+        self.command('ACQ:TRIG {}_{}'.format(source.value, edge.value))
+
+    def set_trigger_level(self, voltage_in_mV):
+        self.command('ACQ:TRIG:LEV {}'.format(voltage_in_mV))
+
+    def get_trigger_level(self):
+        return int(self.query('ACQ:TRIG:LEV?'))
+
+    def set_trigger_delay_in_samples(self, number_of_samples):
+        self.command('ACQ:TRIG:DLY {}'.format(number_of_samples))
+
+    def get_trigger_delay_in_samples(self):
+        return int(self.query('ACQ:TRIG:DLY?'))
+
+    def get_trigger_state(self):
+        return TriggerState(self.query('ACQ:TRIG:STAT?'))
+
+    def get_data(self, channel):
+        raw_data = self.query('ACQ:SOUR{}:DATA?'.format(channel))
+        return [float(datapoint) for datapoint in raw_data.strip('{}').split(',')]

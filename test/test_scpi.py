@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from mock import Mock
 from scpipy import *
 from scpipy.links import TcpIpLink
@@ -152,18 +152,102 @@ class GeneratorTest(TestCase):
         self.connection.close()
 
 
+class OscilloscopeTest(TestCase):
+
+    def setUp(self):
+        self.connection = TestScpiConnection()
+        self.connection.open()
+        self.oscilloscope = Oscilloscope(self.connection)
+
+    def test_start(self):
+        self.oscilloscope.start()
+
+    def test_stop(self):
+        self.oscilloscope.stop()
+
+    def test_reset(self):
+        self.oscilloscope.reset()
+
+    def test_set_decimation_factor(self):
+        factor = 65536
+        self.oscilloscope.set_decimation_factor(factor)
+
+    def test_get_decimation_factor(self):
+        self.connection.buffer = '65536'
+        factor = self.oscilloscope.get_decimation_factor()
+        self.assertEqual(65536, factor)
+
+    def test_enable_averaging(self):
+        self.oscilloscope.enable_averaging()
+
+    def test_disable_averaging(self):
+        self.oscilloscope.disable_averaging()
+
+    def test_disable_trigger(self):
+        self.oscilloscope.disable_trigger()
+
+    def test_trigger_inmediately(self):
+        self.oscilloscope.trigger_inmediately()
+
+    def test_set_trigger_event(self):
+        source = TriggerSource.CH1
+        edge = Edge.POSITIVE
+        self.oscilloscope.set_trigger_event(source, edge)
+
+    def test_set_trigger_level(self):
+        voltage_in_mV = 125
+        self.oscilloscope.set_trigger_level(voltage_in_mV)
+
+    def test_get_trigger_level(self):
+        self.connection.buffer = '123'
+        self.assertEqual(123, self.oscilloscope.get_trigger_level())
+
+    def test_set_trigger_delay_in_samples(self):
+        number_of_samples = 2314
+        self.oscilloscope.set_trigger_delay_in_samples(number_of_samples)
+
+    def test_get_trigger_delay_in_samples(self):
+        self.connection.buffer = '2314'
+        self.assertEqual(2314, self.oscilloscope.get_trigger_delay_in_samples())
+
+    def test_get_trigger_state_when_disabled(self):
+        self.connection.buffer = 'TD'
+        self.assertEqual(TriggerState.DISABLED, self.oscilloscope.get_trigger_state())
+
+    def test_get_trigger_state_when_waiting(self):
+        self.connection.buffer = 'WAIT'
+        self.assertEqual(TriggerState.WAITING, self.oscilloscope.get_trigger_state())
+
+    def test_get_data(self):
+        self.connection.buffer = '{1.2,3.2,-1.2  }'
+        channel = 1
+        self.assertAlmostEqual([1.2, 3.2, -1.2], self.oscilloscope.get_data(channel)) 
+        
+    def tearDown(self):
+        self.connection.close()
+
+
 class TestScpiConnection(object):
-    def __init__(self, buffer = 'ABCDEF'):
-        self.buffer = buffer
+    def __init__(self, buffer = ''):
+        self._buffer = buffer
+        self._open = False
         
     def open(self):
-        pass
+        self._open = True
 
     def close(self):
-        pass
+        self._open = False
 
     def write(self, message):
         return len(message)
 
     def read(self, number_of_bytes=4096):
-        return self.buffer
+        return self._buffer
+    
+    @property
+    def buffer(self):
+        return self._buffer
+
+    @buffer.setter
+    def buffer(self, buffer):
+        self._buffer = buffer
