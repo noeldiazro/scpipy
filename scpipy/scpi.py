@@ -1,4 +1,6 @@
+from __future__ import division
 from enum import Enum
+from time import sleep
 from scpipy.links import TcpIpAddress, TcpIpLink
 
 class State(Enum):
@@ -161,8 +163,10 @@ class Generator(object):
 
 class Oscilloscope(object):
 
-    def __init__(self, connection):
+    def __init__(self, connection, base_sampling_rate=int(125e6), buffer_size=16384):
         self._connection = connection
+        self._base_sampling_rate = base_sampling_rate
+        self._buffer_size = buffer_size
 
     def command(self, message):
         self._connection.write(message)
@@ -171,8 +175,12 @@ class Oscilloscope(object):
         self._connection.write(message)
         return self._connection.read()
 
+    def _wait_for_buffer_cleaning(self):
+        sleep(self._buffer_size / self._base_sampling_rate * self.get_decimation_factor())
+
     def start(self):
         self.command('ACQ:START')
+        self._wait_for_buffer_cleaning()
 
     def stop(self):
         self.command('ACQ:STOP')
@@ -182,6 +190,9 @@ class Oscilloscope(object):
 
     def set_decimation_factor(self, factor = 1):
         self.command('ACQ:DEC {}'.format(factor))
+        while True:
+            if self.get_decimation_factor() == factor:
+                break
 
     def get_decimation_factor(self):
         return int(self.query('ACQ:DEC?'))
@@ -222,3 +233,14 @@ class Oscilloscope(object):
     def get_data(self, channel):
         raw_data = self.query('ACQ:SOUR{}:DATA?'.format(channel))
         return [float(datapoint) for datapoint in raw_data.strip('{}').split(',')]
+
+    def get_acquisition(self, channel):
+        while True:
+            if self.get_trigger_state() == TriggerState.DISABLED:
+                break
+            sleep(0.001)
+        voltages = self.get_data(channel)
+
+        decimation_factor = self.get_decimation_factor()
+        times = [i / self._base_sampling_rate * decimation_factor for i in range(len(voltages))]
+        return times, voltages

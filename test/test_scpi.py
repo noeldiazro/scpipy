@@ -160,6 +160,7 @@ class OscilloscopeTest(TestCase):
         self.oscilloscope = Oscilloscope(self.connection)
 
     def test_start(self):
+        self.connection.buffer = '64'        
         self.oscilloscope.start()
 
     def test_stop(self):
@@ -170,6 +171,7 @@ class OscilloscopeTest(TestCase):
 
     def test_set_decimation_factor(self):
         factor = 65536
+        self.connection.buffer = '65536'
         self.oscilloscope.set_decimation_factor(factor)
 
     def test_get_decimation_factor(self):
@@ -222,6 +224,12 @@ class OscilloscopeTest(TestCase):
         self.connection.buffer = '{1.2,3.2,-1.2  }'
         channel = 1
         self.assertAlmostEqual([1.2, 3.2, -1.2], self.oscilloscope.get_data(channel)) 
+
+
+    @skip('WIP: get_acquisition needs two distinct connection buffer outputs')
+    def test_get_acquisition(self):
+        channel = 1
+        times, voltages = self.oscilloscope.get_acquisition(channel)
         
     def tearDown(self):
         self.connection.close()
