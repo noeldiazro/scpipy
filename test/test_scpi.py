@@ -230,7 +230,26 @@ class OscilloscopeTest(TestCase):
     def test_get_acquisition(self):
         channel = 1
         times, voltages = self.oscilloscope.get_acquisition(channel)
+
+    def test_set_trigger_delay_in_ns(self):
+        connection = MockScpiConnection('ACQ:TRIG:DLY:NS 128')
+        oscilloscope = Oscilloscope(connection)
+
+        trigger_delay_in_ns = 128
+        oscilloscope.set_trigger_delay_in_ns(trigger_delay_in_ns)
+
+        self.assertTrue(connection.is_write_called)
+
+    def test_message_get_trigger_delay_in_ns(self):
+        connection = MockScpiConnection('ACQ:TRIG:DLY:NS?', '128')
+        oscilloscope = Oscilloscope(connection)
+        oscilloscope.get_trigger_delay_in_ns()
+        self.assertTrue(connection.is_write_called)
         
+    def test_get_trigger_delay_in_ns(self):
+        self.connection.buffer = '128'
+        self.assertEqual(128, self.oscilloscope.get_trigger_delay_in_ns())
+
     def tearDown(self):
         self.connection.close()
 
@@ -259,3 +278,35 @@ class TestScpiConnection(object):
     @buffer.setter
     def buffer(self, buffer):
         self._buffer = buffer
+
+class MockScpiConnection(object):
+    def __init__(self, expected_message, response=None):
+        self._expected_message = expected_message
+        self._response = response
+        self._is_write_called = False
+        self._is_read_called = False
+
+    def open(self):
+        pass
+
+    def close(self):
+        pass
+
+    @property
+    def is_write_called(self):
+        return self._is_write_called
+    
+    def write(self, message):
+        self._is_write_called = True
+        if message != self._expected_message:
+            raise Exception('Write received unexpected message. Expected {0} - '
+                            'Received {1}'.format(self._expected_message, message))
+        return len(message)
+
+    @property
+    def is_read_called(self):
+        return self._is_read_called
+    
+    def read(self, number_of_bytes=4096):
+        self._is_read_called = True
+        return self._response

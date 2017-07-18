@@ -227,6 +227,12 @@ class Oscilloscope(object):
     def get_trigger_delay_in_samples(self):
         return int(self.query('ACQ:TRIG:DLY?'))
 
+    def set_trigger_delay_in_ns(self, delay_in_ns):
+        self.command('ACQ:TRIG:DLY:NS {}'.format(delay_in_ns))
+
+    def get_trigger_delay_in_ns(self):
+        return int(self.query('ACQ:TRIG:DLY:NS?'))
+        
     def get_trigger_state(self):
         return TriggerState(self.query('ACQ:TRIG:STAT?'))
 
