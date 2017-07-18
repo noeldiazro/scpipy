@@ -1,11 +1,33 @@
+from abc import ABCMeta, abstractmethod
 from socket import socket
 
+class Link(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def open(self):
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
+
+    @abstractmethod
+    def read(self, number_of_bytes):
+        pass
+
+    @abstractmethod
+    def write(self, message):
+        pass
+
+    
 class TcpIpAddress(object):
     def __init__(self, host, port):
         self.host = host
         self.port = port
 
-class TcpIpLink(object):
+
+class TcpIpLink(Link):
     def __init__(self, address, timeout=None, alt_socket=None):
         self.address = address
         self.timeout = timeout
