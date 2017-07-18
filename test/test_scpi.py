@@ -43,22 +43,45 @@ class DigitalControllerTest(TestCase):
         self.connection.open()
         self.controller = DigitalController(self.connection)
 
-    def test_set_state(self):
-        pin = 'LED0'
+    def assert_written_message_is(self, message):
+        self.connection.write.assert_called_once_with(message)
+
+    def test_set_state_high(self):
+        pin = 'LED2'
         state = State.HIGH
         self.controller.set_state(pin, state)
+        self.assert_written_message_is('DIG:PIN LED2,1')
 
-    def test_set_direction(self):
-        pin = 'LED0'
+    def test_set_state_low(self):
+        pin = 'LED2'
+        state = State.LOW
+        self.controller.set_state(pin, state)
+        self.assert_written_message_is('DIG:PIN LED2,0')
+
+    def test_set_direction_output(self):
+        pin = 'DIO0_N'
         direction = Direction.OUTPUT
         self.controller.set_direction(pin, direction)
+        self.assert_written_message_is('DIG:PIN:DIR OUT,DIO0_N')
 
-    def test_get_state(self):
-        self.connection.read.return_value = '1'
+    def test_set_direction_input(self):
+        pin = 'DIO1_P'
+        direction = Direction.INPUT
+        self.controller.set_direction(pin, direction)
+        self.assert_written_message_is('DIG:PIN:DIR IN,DIO1_P')
+
+    def test_get_state_high(self):
+        self.connection.read = Mock(return_value = '1')
         pin = 'DIO0_N'
         state = self.controller.get_state('DIO0_N')
         self.assertEqual(State.HIGH, state)
-
+        
+    def test_get_state_written_message(self):
+        self.connection.read = Mock(return_value = '1')        
+        pin = 'LED2'
+        self.controller.get_state(pin)
+        self.assert_written_message_is('DIG:PIN? LED2')
+        
     def tearDown(self):
         self.connection.close()
         
@@ -89,64 +112,80 @@ class GeneratorTest(TestCase):
         self.connection = Mock(ScpiConnection)
         self.connection.open()
         self.generator = Generator(self.connection)
+
+    def assert_written_message_is(self, message):
+        self.connection.write.assert_called_once_with(message)
         
     def test_reset_generator(self):
         self.generator.reset()
+        self.assert_written_message_is('GEN:RST')
 
     def test_set_waveform(self):
-        channel = 1
-        waveform = Waveform.SINE
+        channel = 2
+        waveform = Waveform.TRIANGLE
         self.generator.set_waveform(channel, waveform)
+        self.assert_written_message_is('SOUR2:FUNC TRIANGLE')
 
     def test_set_frequency(self):
-        channel = 1
+        channel = 2
         frequency = 100000
         self.generator.set_frequency(channel, frequency)
+        self.assert_written_message_is('SOUR2:FREQ:FIX 100000')
 
     def test_set_amplitude(self):
         channel = 2
         amplitude = 0.5
         self.generator.set_amplitude(channel, amplitude)
-
+        self.assert_written_message_is('SOUR2:VOLT 0.5')
+        
     def test_enable_output(self):
         channel = 1
         self.generator.enable_output(channel)
+        self.assert_written_message_is('OUTPUT1:STATE ON')
 
     def test_disable_output(self):
         channel = 1
         self.generator.disable_output(channel)
+        self.assert_written_message_is('OUTPUT1:STATE OFF')        
 
     def test_enable_burst_mode(self):
         channel = 1
         self.generator.enable_burst(channel)
+        self.assert_written_message_is('SOUR1:BURS:STAT ON')
 
     def test_disable_burst_mode(self):
-        channel = 2
+        channel = 1
         self.generator.disable_burst(channel)
+        self.assert_written_message_is('SOUR1:BURS:STAT OFF')
 
     def test_set_burst_count(self):
         channel = 1
         count = 3
         self.generator.set_burst_count(channel, count)
+        self.assert_written_message_is('SOUR1:BURS:NCYC 3')
 
     def test_set_burst_repetitions(self):
-        channel = 2
+        channel = 1
         repetitions = 5
         self.generator.set_burst_repetitions(channel, repetitions)
+        self.assert_written_message_is('SOUR1:BURS:NOR 5')
 
     def test_set_burst_period(self):
         channel = 1
-        period_in_us = 2000
+        period_in_us = 1000000
         self.generator.set_burst_period(channel, period_in_us)
+        self.assert_written_message_is('SOUR1:BURS:INT:PER 1000000')
 
     def test_trigger_immediately(self):
         channel = 1
         self.generator.trigger_immediately(channel)
+        self.assert_written_message_is('SOUR1:TRIG:IMM')
 
     def test_set_arbitrary_waveform_data(self):
         channel = 1
         data = [1, 0.5, 0.2]
         self.generator.set_arbitrary_waveform_data(channel, data)
+        self.assert_written_message_is('SOUR1:TRAC:DATA:DATA 1,0.5,0.2')
         
     def tearDown(self):
         self.connection.close()

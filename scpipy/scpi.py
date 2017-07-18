@@ -11,7 +11,7 @@ class State(Enum):
 
 class Direction(Enum):
     INPUT = 'IN'
-    OUTPUT = 'OUTPUT'
+    OUTPUT = 'OUT'
 
 
 class Waveform(Enum):
@@ -98,7 +98,7 @@ class DigitalController(ScpiControlledInterface):
         self.command('DIG:PIN {},{}'.format(pin, state.value))
 
     def set_direction(self, pin, direction):
-        self.command('DIG:PIN DIR {},{}'.format(direction.value, pin))
+        self.command('DIG:PIN:DIR {},{}'.format(direction.value, pin))
 
     def get_state(self, pin):
         return State(self.query('DIG:PIN? {}'.format(pin)))
@@ -162,7 +162,9 @@ class Generator(ScpiControlledInterface):
         self.command('SOUR{}:TRIG:IMM'.format(channel))
 
     def set_arbitrary_waveform_data(self, channel, data):
-        self.command('SOUR{}:TRAC:DATA:DATA {}'.format(channel, ','.join('{:1.2f}'.format(value) for value in data)))
+        self.command('SOUR{}:TRAC:DATA:DATA {}'.format(channel, ','.join('{:1.2f}'.format(value).rstrip('0').rstrip('.')
+                                                                         for value
+                                                                         in data)))
 
 
 class Oscilloscope(ScpiControlledInterface):
