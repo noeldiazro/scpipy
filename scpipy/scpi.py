@@ -1,4 +1,5 @@
 from __future__ import division
+from abc import ABCMeta
 from enum import Enum
 from time import sleep
 from scpipy.links import TcpIpAddress, TcpIpLink
@@ -75,46 +76,49 @@ def get_tcpip_scpi_connection(host, port=5000, timeout=None, alt_socket=None):
     link = TcpIpLink(TcpIpAddress(host, port))
     return ScpiConnection(link)
 
-        
-class DigitalController(object):
-    def __init__(self, connection):
-        self._connection = connection
+class ScpiControlledInterface(object):
+    __metaclass__ = ABCMeta
 
-    def set_state(self, pin, state):
-        message = 'DIG:PIN {},{}'.format(pin, state.value)
-        self._connection.write(message)
-
-    def set_direction(self, pin, direction):
-        message = 'DIG:PIN DIR {},{}'.format(direction.value, pin)
-        self._connection.write(message)
-
-    def get_state(self, pin):
-        request = 'DIG:PIN? {}'.format(pin)
-        self._connection.write(request)
-        return State(self._connection.read())
-
-
-class AnalogController(object):
-    def __init__(self, connection):
-        self._connection = connection
-
-    def get_analog_input(self, pin):
-        request = 'ANALOG:PIN? {}'.format(pin)
-        self._connection.write(request)
-        return float(self._connection.read())
-
-    def set_analog_output(self, pin, value):
-        message = 'ANALOG:PIN {},{}'.format(pin, str(value))
-        self._connection.write(message)
-
-
-class Generator(object):
     def __init__(self, connection):
         self._connection = connection
 
     def command(self, message):
         self._connection.write(message)
+
+    def query(self, message):
+        self._connection.write(message)
+        return self._connection.read()
+
+
+class DigitalController(ScpiControlledInterface):
+    def __init__(self, connection):
+        ScpiControlledInterface.__init__(self, connection)
+
+    def set_state(self, pin, state):
+        self.command('DIG:PIN {},{}'.format(pin, state.value))
+
+    def set_direction(self, pin, direction):
+        self.command('DIG:PIN DIR {},{}'.format(direction.value, pin))
+
+    def get_state(self, pin):
+        return State(self.query('DIG:PIN? {}'.format(pin)))
+
+
+class AnalogController(ScpiControlledInterface):
+    def __init__(self, connection):
+        ScpiControlledInterface.__init__(self, connection)
         
+    def get_analog_input(self, pin):
+        return float(self.query('ANALOG:PIN? {}'.format(pin)))
+
+    def set_analog_output(self, pin, value):
+        self.command('ANALOG:PIN {},{}'.format(pin, str(value)))
+
+
+class Generator(ScpiControlledInterface):
+    def __init__(self, connection):
+        ScpiControlledInterface.__init__(self, connection)
+
     def reset(self):
         self.command('GEN:RST')
 
@@ -161,19 +165,12 @@ class Generator(object):
         self.command('SOUR{}:TRAC:DATA:DATA {}'.format(channel, ','.join('{:1.2f}'.format(value) for value in data)))
 
 
-class Oscilloscope(object):
+class Oscilloscope(ScpiControlledInterface):
 
     def __init__(self, connection, base_sampling_rate=int(125e6), buffer_size=16384):
-        self._connection = connection
+        ScpiControlledInterface.__init__(self, connection)
         self._base_sampling_rate = base_sampling_rate
         self._buffer_size = buffer_size
-
-    def command(self, message):
-        self._connection.write(message)
-        
-    def query(self, message):
-        self._connection.write(message)
-        return self._connection.read()
 
     def _wait_for_buffer_cleaning(self):
         sleep(self._buffer_size / self._base_sampling_rate * self.get_decimation_factor())
