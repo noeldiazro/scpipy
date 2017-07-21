@@ -92,8 +92,11 @@ class AnalogControllerTest(TestCase):
         self.connection.open()
         self.controller = AnalogController(self.connection)
 
+    def assert_written_message_is(self, message):
+        self.connection.write.assert_called_once_with(message)
+
     def test_get_analog_input(self):
-        self.connection.read.return_value = '1.8'
+        self.connection.read = Mock(return_value = '1.8')
         pin = 'AIN3'
         voltage = self.controller.get_analog_input(pin)
         self.assertAlmostEqual(1.8, voltage, delta=0.0001)
@@ -102,6 +105,13 @@ class AnalogControllerTest(TestCase):
         pin = 'AOUT3'
         value = 1.34
         self.controller.set_analog_output(pin, value)
+        self.assert_written_message_is('ANALOG:PIN AOUT3,1.34')
+        
+    def test_get_analog_input_message(self):
+        self.connection.read = Mock(return_value = '1.34')
+        pin = 'AIN1'
+        self.controller.get_analog_input(pin)
+        self.assert_written_message_is('ANALOG:PIN? AIN1')
 
     def tearDown(self):
         self.connection.close()
@@ -227,8 +237,8 @@ class OscilloscopeTest(TestCase):
     def test_disable_trigger(self):
         self.oscilloscope.disable_trigger()
 
-    def test_trigger_inmediately(self):
-        self.oscilloscope.trigger_inmediately()
+    def test_trigger_immediately(self):
+        self.oscilloscope.trigger_immediately()
 
     def test_set_trigger_event(self):
         source = TriggerSource.CH1

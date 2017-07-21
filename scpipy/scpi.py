@@ -208,7 +208,7 @@ class Oscilloscope(ScpiControlledInterface):
     def disable_trigger(self):
         self.command('ACQ:TRIG DISABLED')
 
-    def trigger_inmediately(self):
+    def trigger_immediately(self):
         self.command('ACQ:TRIG NOW')
 
     def set_trigger_event(self, source, edge):
