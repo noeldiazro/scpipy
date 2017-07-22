@@ -162,7 +162,7 @@ class Generator(ScpiControlledInterface):
         self.command('SOUR{}:TRIG:IMM'.format(channel))
 
     def set_arbitrary_waveform_data(self, channel, data):
-        self.command('SOUR{}:TRAC:DATA:DATA {}'.format(channel, ','.join('{:1.2f}'.format(value).rstrip('0').rstrip('.')
+        self.command('SOUR{}:TRAC:DATA:DATA {}'.format(channel, ','.join('{:1.5f}'.format(value).rstrip('0').rstrip('.')
                                                                          for value
                                                                          in data)))
 
@@ -214,8 +214,8 @@ class Oscilloscope(ScpiControlledInterface):
     def set_trigger_event(self, source, edge):
         self.command('ACQ:TRIG {}_{}'.format(source.value, edge.value))
 
-    def set_trigger_level(self, voltage_in_mV):
-        self.command('ACQ:TRIG:LEV {}'.format(voltage_in_mV))
+    def set_trigger_level(self, voltage):
+        self.command('ACQ:TRIG:LEV {}'.format(voltage))
 
     def get_trigger_level(self):
         return int(self.query('ACQ:TRIG:LEV?'))

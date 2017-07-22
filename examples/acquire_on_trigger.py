@@ -16,7 +16,7 @@ def main(host):
         scope.set_decimation_factor(64)
         
         scope.start()
-        scope.trigger_inmediately()
+        scope.trigger_immediately()
         time, data = scope.get_acquisition(1)
 
         plt.plot(time, data)
